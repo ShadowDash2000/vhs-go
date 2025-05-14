@@ -65,12 +65,12 @@ func (a *AppBase) UploadVideo(c *websocket.Conn) error {
 			break
 		}
 
-		switch UploadVideoMessage(mt) {
-		case UploadVideoMessageStart:
+		switch mt {
+		case websocket.TextMessage:
 			err = a.startUpload(message, v)
 			resMessage = UploadVideoMessagePart
 			break
-		case UploadVideoMessagePart:
+		case websocket.BinaryMessage:
 			done, err = v.UploadPart(message)
 			if done {
 				resMessage = UploadVideoMessageEnd
@@ -78,7 +78,7 @@ func (a *AppBase) UploadVideo(c *websocket.Conn) error {
 				resMessage = UploadVideoMessagePart
 			}
 			break
-		case UploadVideoMessageCancel:
+		case websocket.CloseMessage:
 			err = v.Cancel()
 			resMessage = UploadVideoMessageEnd
 			break
@@ -117,4 +117,8 @@ func (a *AppBase) startUpload(message []byte, v VideoUploader) error {
 	}
 
 	return nil
+}
+
+func (a *AppBase) IsDev() bool {
+	return PocketBase.IsDev()
 }

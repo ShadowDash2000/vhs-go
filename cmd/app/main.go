@@ -10,9 +10,14 @@ import (
 
 func main() {
 	app := vhs.New()
-	handlers.New(app)
+	handlers := handlers.New(app)
 
 	vhs.PocketBase.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		r := se.Router
+		api := r.Group("/api")
+
+		api.GET("/upload", handlers.UploadVideoHandler)
+
 		return se.Next()
 	})
 
