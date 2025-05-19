@@ -2,6 +2,7 @@ package vhs
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gorilla/websocket"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -31,14 +32,11 @@ func (a *AppBase) Start() error {
 	return PocketBase.Start()
 }
 
-type UploadVideoMessage int
-
 const (
-	UploadVideoMessageStart UploadVideoMessage = iota
-	UploadVideoMessagePart
-	UploadVideoMessageEnd
-	UploadVideoMessageCancel
-	UploadVideoMessageError
+	UploadVideoMessagePart   = "part"
+	UploadVideoMessageEnd    = "end"
+	UploadVideoMessageCancel = "cancel"
+	UploadVideoMessageError  = "error"
 )
 
 func (a *AppBase) UploadVideo(c *websocket.Conn) error {
@@ -48,15 +46,11 @@ func (a *AppBase) UploadVideo(c *websocket.Conn) error {
 		mt         int
 		message    []byte
 		done       = false
-		resMessage UploadVideoMessage
+		resMessage string
 	)
 
 	res := map[string]interface{}{}
-
-	v, err = NewVideoUploader()
-	if err != nil {
-		return err
-	}
+	v = NewVideoUploader()
 
 	for {
 		mt, message, err = c.ReadMessage()
@@ -80,7 +74,7 @@ func (a *AppBase) UploadVideo(c *websocket.Conn) error {
 			break
 		case websocket.CloseMessage:
 			err = v.Cancel()
-			resMessage = UploadVideoMessageEnd
+			resMessage = UploadVideoMessageCancel
 			break
 		default:
 			return nil
@@ -111,7 +105,16 @@ func (a *AppBase) startUpload(message []byte, v VideoUploader) error {
 		return err
 	}
 
-	err := v.Start(data)
+	record, err := PocketBase.FindAuthRecordByToken(data.Token, core.TokenTypeAuth)
+	if err != nil {
+		return err
+	}
+	if record == nil {
+		return errors.New("invalid token")
+	}
+
+	data.UserId = record.Id
+	err = v.Start(data)
 	if err != nil {
 		return err
 	}

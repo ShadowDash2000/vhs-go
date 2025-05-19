@@ -8,57 +8,51 @@ import (
 
 type VideoUploaderBase struct {
 	tmpFile      *os.File
-	started      bool
 	bytesWritten int
 	data         *VideoUploadData
 	video        Video
 }
 
-func NewVideoUploader() (VideoUploader, error) {
-	file, err := os.CreateTemp("upload/video", "video_")
+const UploadDir = "upload/video"
+
+func NewVideoUploader() VideoUploader {
+	return &VideoUploaderBase{}
+}
+
+func (v *VideoUploaderBase) Start(data *VideoUploadData) error {
+	err := os.MkdirAll(UploadDir, 0755)
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	file, err := os.CreateTemp(UploadDir, "video_")
+	if err != nil {
+		return err
 	}
 
 	col, err := Collections.Get(VideosCollection)
 	if err != nil {
-		return nil, err
-	}
-
-	video := &VideoBase{}
-	record := core.NewRecord(col)
-	video.SetProxyRecord(record)
-	if err = video.Save(); err != nil {
-		return nil, err
-	}
-
-	return &VideoUploaderBase{
-		tmpFile: file,
-		video:   video,
-	}, nil
-}
-
-func (v *VideoUploaderBase) Start(data *VideoUploadData) error {
-	if v.started {
-		return nil
-	}
-
-	v.data = data
-
-	v.video.SetName(data.FileName)
-	if err := v.video.Save(); err != nil {
 		return err
 	}
 
-	v.started = true
+	record := core.NewRecord(col)
+	video := NewVideoFromRecord(record)
+	video.SetStatus(StatusClosed)
+	video.SetUser(data.UserId)
+	video.SetName(data.Name)
+
+	if err = video.Save(); err != nil {
+		return err
+	}
+
+	v.tmpFile = file
+	v.video = video
+	v.data = data
+
 	return nil
 }
 
 func (v *VideoUploaderBase) UploadPart(p []byte) (bool, error) {
-	if !v.started {
-		return false, nil
-	}
-
 	n, err := v.tmpFile.Write(p)
 	if err != nil {
 		return false, err
@@ -66,7 +60,7 @@ func (v *VideoUploaderBase) UploadPart(p []byte) (bool, error) {
 	v.bytesWritten += n
 
 	done := false
-	if v.bytesWritten >= v.data.FileSize {
+	if v.bytesWritten >= v.data.Size {
 		done = true
 	}
 
@@ -84,17 +78,20 @@ func (v *VideoUploaderBase) Done() error {
 	}
 
 	v.video.SetVideo(file)
-	v.video.Save()
+	err = v.video.Save()
 
-	return v.clear()
+	v.clear()
+
+	return err
 }
 
 func (v *VideoUploaderBase) clear() error {
-	if !v.started {
-		return nil
+	err := v.tmpFile.Close()
+	if err != nil {
+		return err
 	}
 
-	err := v.tmpFile.Close()
+	err = os.Remove(v.tmpFile.Name())
 	if err != nil {
 		return err
 	}

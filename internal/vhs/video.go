@@ -19,4 +19,16 @@ type Video interface {
 	SetThumbnails([]*filesystem.File)
 	Video() string
 	SetVideo(*filesystem.File)
+	Status() Status
+	SetStatus(Status)
+	User() string
+	SetUser(string)
 }
+
+type Status string
+
+const (
+	StatusPublic Status = "public"
+	StatusLink          = "link"
+	StatusClosed        = "closed"
+)

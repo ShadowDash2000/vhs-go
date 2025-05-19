@@ -10,7 +10,9 @@ type VideoBase struct {
 }
 
 func NewVideoFromRecord(record *core.Record) Video {
-	return &VideoBase{}
+	v := &VideoBase{}
+	v.SetProxyRecord(record)
+	return v
 }
 
 func (v *VideoBase) Save() error {
@@ -18,48 +20,39 @@ func (v *VideoBase) Save() error {
 }
 
 func (v *VideoBase) ID() string {
-	//TODO implement me
-	panic("implement me")
+	return v.Id
 }
 
 func (v *VideoBase) Name() string {
-	//TODO implement me
-	panic("implement me")
+	return v.GetString("name")
 }
 
 func (v *VideoBase) SetName(s string) {
-	//TODO implement me
-	panic("implement me")
+	v.Set("name", s)
 }
 
 func (v *VideoBase) DefaultPreview() string {
-	//TODO implement me
-	panic("implement me")
+	return v.GetString("defaultPreview")
 }
 
 func (v *VideoBase) SetDefaultPreview(file *filesystem.File) {
-	//TODO implement me
-	panic("implement me")
+	v.Set("defaultPreview", file)
 }
 
 func (v *VideoBase) Preview() string {
-	//TODO implement me
-	panic("implement me")
+	return v.GetString("preview")
 }
 
 func (v *VideoBase) SetPreview(file *filesystem.File) {
-	//TODO implement me
-	panic("implement me")
+	v.Set("preview", file)
 }
 
 func (v *VideoBase) Thumbnails() []string {
-	//TODO implement me
-	panic("implement me")
+	return v.GetStringSlice("thumbnails")
 }
 
 func (v *VideoBase) SetThumbnails(files []*filesystem.File) {
-	//TODO implement me
-	panic("implement me")
+	v.Set("thumbnails", files)
 }
 
 func (v *VideoBase) Video() string {
@@ -68,4 +61,20 @@ func (v *VideoBase) Video() string {
 
 func (v *VideoBase) SetVideo(file *filesystem.File) {
 	v.Set("video", file)
+}
+
+func (v *VideoBase) Status() Status {
+	return Status(v.GetString("status"))
+}
+
+func (v *VideoBase) SetStatus(status Status) {
+	v.Set("status", string(status))
+}
+
+func (v *VideoBase) User() string {
+	return v.GetString("user")
+}
+
+func (v *VideoBase) SetUser(user string) {
+	v.Set("user", user)
 }

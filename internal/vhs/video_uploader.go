@@ -8,6 +8,8 @@ type VideoUploader interface {
 }
 
 type VideoUploadData struct {
-	FileSize int
-	FileName string
+	Size   int    `json:"size"`
+	Name   string `json:"name"`
+	Token  string `json:"token"`
+	UserId string
 }
