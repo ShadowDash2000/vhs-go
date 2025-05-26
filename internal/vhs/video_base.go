@@ -70,3 +70,11 @@ func (v *VideoBase) User() string {
 func (v *VideoBase) SetUser(user string) {
 	v.Set("user", user)
 }
+
+func (v *VideoBase) WebVTT() string {
+	return v.GetString("webvtt")
+}
+
+func (v *VideoBase) SetWebVTT(file *filesystem.File) {
+	v.Set("webvtt", file)
+}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"log"
 	"vhs/internal/http/handlers/v1"
@@ -20,7 +19,6 @@ func main() {
 
 		upload := api.Group("")
 		upload.
-			Bind(apis.RequireAuth()).
 			GET("/upload", handlers.UploadVideoHandler)
 
 		video := api.

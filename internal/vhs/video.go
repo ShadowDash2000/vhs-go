@@ -21,6 +21,8 @@ type Video interface {
 	SetStatus(Status)
 	User() string
 	SetUser(string)
+	WebVTT() string
+	SetWebVTT(*filesystem.File)
 }
 
 type Status string
