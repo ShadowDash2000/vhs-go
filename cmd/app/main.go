@@ -1,9 +1,11 @@
 package main
 
 import (
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"log"
 	"vhs/internal/http/handlers/v1"
+	"vhs/internal/middleware"
 	"vhs/internal/vhs"
 	_ "vhs/migrations"
 )
@@ -16,7 +18,16 @@ func main() {
 		r := se.Router
 		api := r.Group("/api")
 
-		api.GET("/upload", handlers.UploadVideoHandler)
+		upload := api.Group("")
+		upload.
+			Bind(apis.RequireAuth()).
+			GET("/upload", handlers.UploadVideoHandler)
+
+		video := api.
+			Bind(middleware.AuthorizeGet()).
+			Group("/video/{videoId}")
+		video.
+			GET("/stream", handlers.ServeVideoHandler)
 
 		return se.Next()
 	})

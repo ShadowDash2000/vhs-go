@@ -34,3 +34,40 @@ func (h *Handlers) UploadVideoHandler(e *core.RequestEvent) error {
 
 	return err
 }
+
+func (h *Handlers) ServeVideoHandler(e *core.RequestEvent) error {
+	videoId := e.Request.PathValue("videoId")
+
+	info, err := e.RequestInfo()
+	if err != nil {
+		return err
+	}
+
+	record, err := vhs.PocketBase.FindRecordById(vhs.VideosCollection, videoId)
+	if err != nil {
+		return err
+	}
+
+	video := vhs.NewVideoFromRecord(record)
+
+	canAccess, err := vhs.PocketBase.CanAccessRecord(record, info, record.Collection().ViewRule)
+	if err != nil {
+		return err
+	}
+
+	if !canAccess {
+		return e.NotFoundError("video not found", nil)
+	}
+
+	fs, err := vhs.PocketBase.NewFilesystem()
+	if err != nil {
+		return err
+	}
+
+	return fs.Serve(
+		e.Response,
+		e.Request,
+		record.BaseFilesPath()+"/"+video.Video(),
+		video.Name(),
+	)
+}

@@ -678,7 +678,7 @@ func init() {
 						"pattern": "",
 						"presentable": false,
 						"primaryKey": false,
-						"required": false,
+						"required": true,
 						"system": false,
 						"type": "text"
 					},
@@ -729,7 +729,8 @@ func init() {
 				"id": "_pb_users_auth_",
 				"indexes": [
 					"CREATE UNIQUE INDEX ` + "`" + `idx_tokenKey__pb_users_auth_` + "`" + ` ON ` + "`" + `users` + "`" + ` (` + "`" + `tokenKey` + "`" + `)",
-					"CREATE UNIQUE INDEX ` + "`" + `idx_email__pb_users_auth_` + "`" + ` ON ` + "`" + `users` + "`" + ` (` + "`" + `email` + "`" + `) WHERE ` + "`" + `email` + "`" + ` != ''"
+					"CREATE UNIQUE INDEX ` + "`" + `idx_email__pb_users_auth_` + "`" + ` ON ` + "`" + `users` + "`" + ` (` + "`" + `email` + "`" + `) WHERE ` + "`" + `email` + "`" + ` != ''",
+					"CREATE UNIQUE INDEX ` + "`" + `idx_qRVQ7OdTCX` + "`" + ` ON ` + "`" + `users` + "`" + ` (` + "`" + `name` + "`" + `)"
 				],
 				"listRule": "id = @request.auth.id",
 				"manageRule": null,
@@ -758,9 +759,10 @@ func init() {
 					"length": 8
 				},
 				"passwordAuth": {
-					"enabled": false,
+					"enabled": true,
 					"identityFields": [
-						"email"
+						"email",
+						"name"
 					]
 				},
 				"passwordResetToken": {
@@ -836,25 +838,6 @@ func init() {
 					},
 					{
 						"hidden": false,
-						"id": "file1750792828",
-						"maxSelect": 1,
-						"maxSize": 0,
-						"mimeTypes": [
-							"image/jpeg",
-							"image/png",
-							"image/gif",
-							"image/webp"
-						],
-						"name": "defaultPreview",
-						"presentable": false,
-						"protected": false,
-						"required": false,
-						"system": false,
-						"thumbs": [],
-						"type": "file"
-					},
-					{
-						"hidden": false,
 						"id": "file3112513328",
 						"maxSelect": 1,
 						"maxSize": 0,
@@ -866,7 +849,7 @@ func init() {
 						],
 						"name": "preview",
 						"presentable": false,
-						"protected": false,
+						"protected": true,
 						"required": false,
 						"system": false,
 						"thumbs": [],
@@ -884,7 +867,23 @@ func init() {
 						],
 						"name": "thumbnails",
 						"presentable": false,
-						"protected": false,
+						"protected": true,
+						"required": false,
+						"system": false,
+						"thumbs": [],
+						"type": "file"
+					},
+					{
+						"hidden": false,
+						"id": "file727664218",
+						"maxSelect": 1,
+						"maxSize": 0,
+						"mimeTypes": [
+							"text/vtt"
+						],
+						"name": "webvtt",
+						"presentable": false,
+						"protected": true,
 						"required": false,
 						"system": false,
 						"thumbs": [],
@@ -894,27 +893,55 @@ func init() {
 						"hidden": false,
 						"id": "file2093472300",
 						"maxSelect": 1,
-						"maxSize": 0,
+						"maxSize": 21474836480,
 						"mimeTypes": [
 							"video/mp4"
 						],
 						"name": "video",
 						"presentable": false,
-						"protected": false,
+						"protected": true,
 						"required": false,
 						"system": false,
 						"thumbs": [],
 						"type": "file"
+					},
+					{
+						"hidden": false,
+						"id": "select2063623452",
+						"maxSelect": 1,
+						"name": "status",
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "select",
+						"values": [
+							"public",
+							"link",
+							"closed"
+						]
+					},
+					{
+						"cascadeDelete": false,
+						"collectionId": "_pb_users_auth_",
+						"hidden": false,
+						"id": "relation2375276105",
+						"maxSelect": 1,
+						"minSelect": 0,
+						"name": "user",
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "relation"
 					}
 				],
 				"id": "pbc_515447164",
 				"indexes": [],
-				"listRule": null,
+				"listRule": "@request.auth.id = user.id || status = \"public\"",
 				"name": "videos",
 				"system": false,
 				"type": "base",
 				"updateRule": null,
-				"viewRule": null
+				"viewRule": "@request.auth.id = user.id || status = \"public\""
 			}
 		]`
 

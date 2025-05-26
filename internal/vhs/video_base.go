@@ -31,14 +31,6 @@ func (v *VideoBase) SetName(s string) {
 	v.Set("name", s)
 }
 
-func (v *VideoBase) DefaultPreview() string {
-	return v.GetString("defaultPreview")
-}
-
-func (v *VideoBase) SetDefaultPreview(file *filesystem.File) {
-	v.Set("defaultPreview", file)
-}
-
 func (v *VideoBase) Preview() string {
 	return v.GetString("preview")
 }

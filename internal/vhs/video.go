@@ -11,8 +11,6 @@ type Video interface {
 	ID() string
 	Name() string
 	SetName(string)
-	DefaultPreview() string
-	SetDefaultPreview(*filesystem.File)
 	Preview() string
 	SetPreview(*filesystem.File)
 	Thumbnails() []string
