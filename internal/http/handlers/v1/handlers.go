@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/gorilla/websocket"
 	"github.com/pocketbase/pocketbase/core"
 	"net/http"
 	"vhs/internal/vhs"
+	"vhs/internal/vhs/entities"
+	"vhs/internal/vhs/entities/dto"
 )
 
 type Handlers struct {
@@ -43,7 +46,7 @@ func (h *Handlers) ServeVideoHandler(e *core.RequestEvent) error {
 		return err
 	}
 
-	record, err := vhs.PocketBase.FindRecordById(vhs.VideosCollection, videoId)
+	record, err := vhs.PocketBase.FindRecordById(entities.VideosCollection, videoId)
 	if err != nil {
 		return err
 	}
@@ -70,4 +73,26 @@ func (h *Handlers) ServeVideoHandler(e *core.RequestEvent) error {
 		record.BaseFilesPath()+"/"+video.Video(),
 		video.Name(),
 	)
+}
+
+func (h *Handlers) UpdateVideoHandler(e *core.RequestEvent) error {
+	var data *dto.VideoUpdateRequest
+	if err := e.BindBody(&data); err != nil {
+		return e.BadRequestError("invalid request body", err)
+	}
+
+	files, err := e.FindUploadedFiles("preview")
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		return e.InternalServerError("error while processing uploaded file", err)
+	} else if len(files) > 0 {
+		data.Preview = files[0]
+	}
+
+	videoId := e.Request.PathValue("videoId")
+	err = h.app.UpdateVideo(videoId, e.Auth.Id, dto.NewVideoUpdate(data))
+	if err != nil {
+		return e.InternalServerError("error while updating video", err)
+	}
+
+	return nil
 }

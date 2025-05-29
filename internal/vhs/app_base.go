@@ -3,9 +3,11 @@ package vhs
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"vhs/internal/vhs/entities/dto"
 	"vhs/pkg/collections"
 )
 
@@ -32,6 +34,10 @@ func (a *AppBase) Start() error {
 	return PocketBase.Start()
 }
 
+func (a *AppBase) IsDev() bool {
+	return PocketBase.IsDev()
+}
+
 const (
 	UploadVideoMessagePart   = "part"
 	UploadVideoMessageEnd    = "end"
@@ -47,6 +53,7 @@ func (a *AppBase) UploadVideo(c *websocket.Conn) error {
 		message    []byte
 		done       = false
 		resMessage string
+		videoId    string
 	)
 
 	res := map[string]interface{}{}
@@ -61,8 +68,9 @@ func (a *AppBase) UploadVideo(c *websocket.Conn) error {
 
 		switch mt {
 		case websocket.TextMessage:
-			err = a.startUpload(message, v)
+			videoId, err = a.startUpload(message, v)
 			resMessage = UploadVideoMessagePart
+			res["videoId"] = videoId
 			break
 		case websocket.BinaryMessage:
 			done, err = v.UploadPart(message)
@@ -90,38 +98,77 @@ func (a *AppBase) UploadVideo(c *websocket.Conn) error {
 		if err != nil || done {
 			break
 		}
+
+		clear(res)
 	}
 
 	if done {
-		go v.Done()
+		v.Done()
 	}
 
 	return err
 }
 
-func (a *AppBase) startUpload(message []byte, v VideoUploader) error {
+func (a *AppBase) startUpload(message []byte, v VideoUploader) (string, error) {
 	var data *VideoUploadData
 	if err := json.Unmarshal(message, &data); err != nil {
-		return err
+		return "", err
 	}
 
 	record, err := PocketBase.FindAuthRecordByToken(data.Token, core.TokenTypeAuth)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if record == nil {
-		return errors.New("invalid token")
+		return "", errors.New("invalid token")
 	}
 
 	data.UserId = record.Id
-	err = v.Start(data)
+	videoId, err := v.Start(data)
+	if err != nil {
+		return "", err
+	}
+
+	return videoId, nil
+}
+
+func (a *AppBase) UpdateVideo(id string, userId string, data *dto.VideoUpdate) error {
+	var err error
+	defer func() {
+		if err != nil {
+			PocketBase.Logger().Error(
+				"error while updating video: "+err.Error(),
+				map[string]any{
+					"videoId": id,
+					"user":    userId,
+					"data":    data,
+				},
+			)
+		}
+	}()
+
+	video, err := NewVideoFromId(id)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
+	if video.User() != userId {
+		err = fmt.Errorf("expected user %s, got %s", video.User(), userId)
+		return err
+	}
 
-func (a *AppBase) IsDev() bool {
-	return PocketBase.IsDev()
+	if data.Name != "" {
+		video.SetName(data.Name)
+	}
+	if data.Description != "" {
+		video.SetDescription(data.Description)
+	}
+	if data.Status != "" {
+		video.SetStatus(data.Status)
+	}
+	if data.Preview != nil {
+		video.SetPreview(data.Preview)
+	}
+
+	return video.Save()
 }

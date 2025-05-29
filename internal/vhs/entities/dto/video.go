@@ -1,0 +1,29 @@
+package dto
+
+import (
+	"github.com/pocketbase/pocketbase/tools/filesystem"
+	"vhs/internal/vhs/entities"
+)
+
+type VideoUpdateRequest struct {
+	Name        string `form:"name"`
+	Description string `form:"description"`
+	Status      string `form:"status"`
+	Preview     *filesystem.File
+}
+
+type VideoUpdate struct {
+	Name        string
+	Description string
+	Status      entities.Status
+	Preview     *filesystem.File
+}
+
+func NewVideoUpdate(req *VideoUpdateRequest) *VideoUpdate {
+	return &VideoUpdate{
+		Name:        req.Name,
+		Description: req.Description,
+		Status:      entities.Status(req.Status),
+		Preview:     req.Preview,
+	}
+}

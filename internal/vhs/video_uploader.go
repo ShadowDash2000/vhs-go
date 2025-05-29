@@ -1,10 +1,10 @@
 package vhs
 
 type VideoUploader interface {
-	Start(*VideoUploadData) error
+	Start(*VideoUploadData) (string, error)
 	UploadPart([]byte) (bool, error)
 	Cancel() error
-	Done() error
+	Done()
 }
 
 type VideoUploadData struct {

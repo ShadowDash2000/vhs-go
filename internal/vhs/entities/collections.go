@@ -1,4 +1,4 @@
-package vhs
+package entities
 
 const (
 	VideosCollection = "videos"

@@ -3,6 +3,7 @@ package vhs
 import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
+	"vhs/internal/vhs/entities"
 )
 
 type VideoBase struct {
@@ -13,6 +14,15 @@ func NewVideoFromRecord(record *core.Record) Video {
 	v := &VideoBase{}
 	v.SetProxyRecord(record)
 	return v
+}
+
+func NewVideoFromId(id string) (Video, error) {
+	record, err := PocketBase.FindRecordById(entities.VideosCollection, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewVideoFromRecord(record), nil
 }
 
 func (v *VideoBase) Save() error {
@@ -31,12 +41,24 @@ func (v *VideoBase) SetName(s string) {
 	v.Set("name", s)
 }
 
+func (v *VideoBase) Description() string {
+	return v.GetString("description")
+}
+
+func (v *VideoBase) SetDescription(s string) {
+	v.Set("description", s)
+}
+
 func (v *VideoBase) Preview() string {
 	return v.GetString("preview")
 }
 
 func (v *VideoBase) SetPreview(file *filesystem.File) {
 	v.Set("preview", file)
+}
+
+func (v *VideoBase) SetPreviewFromId(id string) {
+	v.Set("preview", id)
 }
 
 func (v *VideoBase) Thumbnails() []string {
@@ -55,11 +77,11 @@ func (v *VideoBase) SetVideo(file *filesystem.File) {
 	v.Set("video", file)
 }
 
-func (v *VideoBase) Status() Status {
-	return Status(v.GetString("status"))
+func (v *VideoBase) Status() entities.Status {
+	return entities.Status(v.GetString("status"))
 }
 
-func (v *VideoBase) SetStatus(status Status) {
+func (v *VideoBase) SetStatus(status entities.Status) {
 	v.Set("status", string(status))
 }
 

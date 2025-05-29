@@ -4,6 +4,8 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"os"
+	"vhs/internal/vhs/entities"
+	"vhs/pkg/errorcollector"
 	"vhs/pkg/ffmpegthumbs"
 	"vhs/pkg/webvtt"
 )
@@ -27,37 +29,37 @@ func NewVideoUploader() VideoUploader {
 	return &VideoUploaderBase{}
 }
 
-func (v *VideoUploaderBase) Start(data *VideoUploadData) error {
+func (v *VideoUploaderBase) Start(data *VideoUploadData) (string, error) {
 	err := os.MkdirAll(UploadDir, 0755)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	file, err := os.CreateTemp(UploadDir, "video_")
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	col, err := Collections.Get(VideosCollection)
+	col, err := Collections.Get(entities.VideosCollection)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	record := core.NewRecord(col)
 	video := NewVideoFromRecord(record)
-	video.SetStatus(StatusClosed)
+	video.SetStatus(entities.StatusClosed)
 	video.SetUser(data.UserId)
 	video.SetName(data.Name)
 
 	if err = video.Save(); err != nil {
-		return err
+		return "", err
 	}
 
 	v.tmpFile = file
 	v.video = video
 	v.data = data
 
-	return nil
+	return video.ID(), nil
 }
 
 func (v *VideoUploaderBase) UploadPart(p []byte) (bool, error) {
@@ -79,7 +81,11 @@ func (v *VideoUploaderBase) Cancel() error {
 	return v.clear()
 }
 
-func (v *VideoUploaderBase) Done() error {
+func (v *VideoUploaderBase) Done() {
+	go v.done()
+}
+
+func (v *VideoUploaderBase) done() error {
 	var err error
 	defer func() {
 		if err != nil {
@@ -108,21 +114,41 @@ func (v *VideoUploaderBase) Done() error {
 	if err = v.CreateWebVTT(); err != nil {
 		return err
 	}
+	if err = v.SetDefaultPreview(); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (v *VideoUploaderBase) clear() error {
-	err := v.tmpFile.Close()
-	if err != nil {
-		return err
-	}
+	ec := errorcollector.NewErrorCollector()
 
-	os.Remove(v.tmpFile.Name())
-	os.RemoveAll(ThumbsDir + "/" + v.video.ID())
-	os.RemoveAll(WebVTTDir + "/" + v.video.ID())
+	defer func() {
+		if ec.HasErrors() {
+			PocketBase.Logger().Error(
+				"error while clearing video files: "+ec.Error().Error(),
+				map[string]any{
+					"video": v.video,
+				},
+			)
+		}
+	}()
 
-	return nil
+	ec.Collect(func() error {
+		return v.tmpFile.Close()
+	})
+	ec.Collect(func() error {
+		return os.Remove(v.tmpFile.Name())
+	})
+	ec.Collect(func() error {
+		return os.RemoveAll(ThumbsDir + "/" + v.video.ID())
+	})
+	ec.Collect(func() error {
+		return os.RemoveAll(WebVTTDir + "/" + v.video.ID())
+	})
+
+	return ec.Error()
 }
 
 func (v *VideoUploaderBase) SaveVideoFile() error {
@@ -194,6 +220,33 @@ func (v *VideoUploaderBase) CreateWebVTT() error {
 	}
 
 	v.video.SetWebVTT(f)
+
+	return v.video.Save()
+}
+
+func (v *VideoUploaderBase) SetDefaultPreview() error {
+	// If the preview isn't empty, this means it was set by the user.
+	if v.video.Preview() != "" {
+		return nil
+	}
+
+	basePath := ThumbsDir + "/" + v.video.ID()
+	entries, err := os.ReadDir(basePath)
+	if err != nil {
+		return err
+	}
+
+	if len(entries) == 0 {
+		return nil
+	}
+
+	thumb := entries[len(entries)/2]
+	f, err := filesystem.NewFileFromPath(basePath + "/" + thumb.Name())
+	if err != nil {
+		return err
+	}
+
+	v.video.SetPreview(f)
 
 	return v.video.Save()
 }
