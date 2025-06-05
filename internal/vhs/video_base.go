@@ -1,6 +1,7 @@
 package vhs
 
 import (
+	"github.com/alexflint/go-restructure"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"vhs/internal/vhs/entities"
@@ -8,11 +9,15 @@ import (
 
 type VideoBase struct {
 	core.BaseRecordProxy
+	info entities.Info
 }
 
 func NewVideoFromRecord(record *core.Record) Video {
 	v := &VideoBase{}
 	v.SetProxyRecord(record)
+
+	v.UnmarshalJSONField("info", &v.info)
+
 	return v
 }
 
@@ -26,7 +31,33 @@ func NewVideoFromId(id string) (Video, error) {
 }
 
 func (v *VideoBase) Save() error {
+	v.parseDescription()
+
+	v.Set("info", v.info)
+
 	return PocketBase.Save(v)
+}
+
+func (v *VideoBase) parseDescription() {
+	regexp := restructure.MustCompile(entities.ChapterRaw{}, restructure.Options{})
+	var chaptersRaw []*entities.ChapterRaw
+	regexp.FindAll(&chaptersRaw, v.Description(), -1)
+
+	var chapters []*entities.Chapter
+	for _, chapterRaw := range chaptersRaw {
+		chapter, err := entities.NewChapterFromRaw(chapterRaw)
+		if err != nil {
+			PocketBase.Logger().Error("parseDescription", map[string]interface{}{
+				"chapter": chapter,
+				"error":   err,
+			})
+			continue
+		}
+
+		chapters = append(chapters, chapter)
+	}
+
+	v.SetChapters(chapters)
 }
 
 func (v *VideoBase) ID() string {
@@ -99,4 +130,20 @@ func (v *VideoBase) WebVTT() string {
 
 func (v *VideoBase) SetWebVTT(file *filesystem.File) {
 	v.Set("webvtt", file)
+}
+
+func (v *VideoBase) Chapters() *[]*entities.Chapter {
+	return &v.info.Chapters
+}
+
+func (v *VideoBase) SetChapters(chapters []*entities.Chapter) {
+	v.info.Chapters = chapters
+}
+
+func (v *VideoBase) Duration() float64 {
+	return v.info.Duration
+}
+
+func (v *VideoBase) SetDuration(duration float64) {
+	v.info.Duration = duration
 }

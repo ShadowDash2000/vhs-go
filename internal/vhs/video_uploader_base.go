@@ -15,6 +15,7 @@ type VideoUploaderBase struct {
 	bytesWritten int
 	data         *VideoUploadData
 	video        Video
+	duration     float64
 }
 
 const (
@@ -105,6 +106,12 @@ func (v *VideoUploaderBase) done() error {
 		}
 	}()
 
+	if v.duration, err = ffmpegthumbs.GetVideoDurationFloat(v.tmpFile.Name()); err != nil {
+		return err
+	}
+	if err = v.SetDuration(); err != nil {
+		return err
+	}
 	if err = v.SaveVideoFile(); err != nil {
 		return err
 	}
@@ -194,11 +201,6 @@ func (v *VideoUploaderBase) CreateStoryBoard() error {
 }
 
 func (v *VideoUploaderBase) CreateWebVTT() error {
-	duration, err := ffmpegthumbs.GetVideoDuration(v.tmpFile.Name())
-	if err != nil {
-		return err
-	}
-
 	var filePaths []string
 	for _, fileId := range v.video.Thumbnails() {
 		filePaths = append(filePaths, "/api/files/"+v.video.ProxyRecord().BaseFilesPath()+"/"+fileId)
@@ -207,7 +209,7 @@ func (v *VideoUploaderBase) CreateWebVTT() error {
 	file, err := webvtt.CreateFromFilePaths(
 		filePaths,
 		WebVTTDir+"/"+v.video.ID(),
-		duration,
+		int(v.duration),
 		FrameDuration,
 	)
 	if err != nil {
@@ -248,5 +250,10 @@ func (v *VideoUploaderBase) SetDefaultPreview() error {
 
 	v.video.SetPreview(f)
 
+	return v.video.Save()
+}
+
+func (v *VideoUploaderBase) SetDuration() error {
+	v.video.SetDuration(v.duration)
 	return v.video.Save()
 }

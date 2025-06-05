@@ -84,6 +84,33 @@ func GetVideoDuration(filePath string) (int, error) {
 	return strconv.Atoi(duration)
 }
 
+func GetVideoDurationFloat(filePath string) (float64, error) {
+	probe := &Probe{}
+	fileInfoJson, err := ffmpeg.Probe(filePath)
+	if err != nil {
+		return 0, err
+	}
+
+	err = json.Unmarshal([]byte(fileInfoJson), &probe)
+	if err != nil {
+		return 0, err
+	}
+
+	var duration string
+	for _, stream := range probe.Streams {
+		if stream.CodecType == "video" {
+			duration = stream.Duration
+			break
+		}
+	}
+
+	if duration == "" {
+		return 0, fmt.Errorf("ffmpeg: duration is empty")
+	}
+
+	return strconv.ParseFloat(duration, 64)
+}
+
 func GetVideoSize(filePath string) (int, int, error) {
 	probe := &Probe{}
 	fileInfoJson, err := ffmpeg.Probe(filePath)

@@ -27,4 +27,8 @@ type Video interface {
 	SetUser(string)
 	WebVTT() string
 	SetWebVTT(*filesystem.File)
+	Chapters() *[]*entities.Chapter
+	SetChapters([]*entities.Chapter)
+	Duration() float64
+	SetDuration(float64)
 }

@@ -166,7 +166,7 @@ func (a *AppBase) UpdateVideo(id string, userId string, data *dto.VideoUpdate) e
 	if data.Status != "" {
 		video.SetStatus(data.Status)
 	}
-	if data.Preview != nil {
+	if data.Preview.Size > 0 {
 		video.SetPreview(data.Preview)
 	}
 
