@@ -837,6 +837,20 @@ func init() {
 						"type": "text"
 					},
 					{
+						"autogeneratePattern": "",
+						"hidden": false,
+						"id": "text1843675174",
+						"max": 0,
+						"min": 0,
+						"name": "description",
+						"pattern": "",
+						"presentable": false,
+						"primaryKey": false,
+						"required": false,
+						"system": false,
+						"type": "text"
+					},
+					{
 						"hidden": false,
 						"id": "file3112513328",
 						"maxSelect": 1,
@@ -932,6 +946,16 @@ func init() {
 						"required": true,
 						"system": false,
 						"type": "relation"
+					},
+					{
+						"hidden": false,
+						"id": "json3414765911",
+						"maxSize": 0,
+						"name": "info",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "json"
 					}
 				],
 				"id": "pbc_515447164",
