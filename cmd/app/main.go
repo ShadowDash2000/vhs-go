@@ -24,9 +24,11 @@ func main() {
 
 		video := api.Group("/video/{videoId}")
 		video.
+			Group("").
 			Bind(apis.RequireAuth()).
 			POST("/update", handlers.UpdateVideoHandler)
 		video.
+			Group("").
 			Bind(middleware.AuthorizeGet()).
 			GET("/stream", handlers.ServeVideoHandler)
 
