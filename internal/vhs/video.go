@@ -9,6 +9,7 @@ import (
 type Video interface {
 	core.RecordProxy
 	Save() error
+	Refresh() error
 	ID() string
 	Name() string
 	SetName(string)

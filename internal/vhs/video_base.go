@@ -16,8 +16,6 @@ func NewVideoFromRecord(record *core.Record) Video {
 	v := &VideoBase{}
 	v.SetProxyRecord(record)
 
-	v.UnmarshalJSONField("info", &v.info)
-
 	return v
 }
 
@@ -30,12 +28,28 @@ func NewVideoFromId(id string) (Video, error) {
 	return NewVideoFromRecord(record), nil
 }
 
+func (v *VideoBase) SetProxyRecord(record *core.Record) {
+	v.BaseRecordProxy.SetProxyRecord(record)
+	v.UnmarshalJSONField("info", &v.info)
+}
+
 func (v *VideoBase) Save() error {
 	v.parseDescription()
 
 	v.Set("info", v.info)
 
 	return PocketBase.Save(v)
+}
+
+func (v *VideoBase) Refresh() error {
+	record, err := PocketBase.FindRecordById(entities.VideosCollection, v.Id)
+	if err != nil {
+		return err
+	}
+
+	v.SetProxyRecord(record)
+
+	return nil
 }
 
 func (v *VideoBase) parseDescription() {

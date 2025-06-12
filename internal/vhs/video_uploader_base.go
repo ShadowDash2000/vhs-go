@@ -106,6 +106,9 @@ func (v *VideoUploaderBase) done() error {
 		}
 	}()
 
+	if err = v.video.Refresh(); err != nil {
+		return err
+	}
 	if v.duration, err = ffmpegthumbs.GetVideoDurationFloat(v.tmpFile.Name()); err != nil {
 		return err
 	}
