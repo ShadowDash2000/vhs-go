@@ -37,7 +37,7 @@ func NewChapterFromRaw(c *ChapterRaw) (*Chapter, error) {
 
 type ChapterRaw struct {
 	_     restructure.Pos
-	Start string   `regexp:"\\d{2}:\\d{2}:\\d{2}"`
+	Start string   `regexp:"(?:(\\d{2}):)?(\\d{2}):(\\d{2})"`
 	_     struct{} `regexp:" - "`
 	Title string   `regexp:".*"`
 	_     restructure.Pos
