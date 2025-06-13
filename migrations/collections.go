@@ -866,7 +866,9 @@ func init() {
 						"protected": false,
 						"required": false,
 						"system": false,
-						"thumbs": [],
+						"thumbs": [
+							"1280x0"
+						],
 						"type": "file"
 					},
 					{
