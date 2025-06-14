@@ -10,4 +10,6 @@ type App interface {
 	IsDev() bool
 	UploadVideo(conn *websocket.Conn) error
 	UpdateVideo(id string, userId string, data *dto.VideoUpdate) error
+	CreatePlaylist(userId string, data *dto.PlaylistCreate) error
+	UpdatePlaylist(id string, userId string, data *dto.PlaylistUpdate) error
 }

@@ -1,5 +1,6 @@
 package entities
 
 const (
-	VideosCollection = "videos"
+	VideosCollection    = "videos"
+	PlaylistsCollection = "playlists"
 )

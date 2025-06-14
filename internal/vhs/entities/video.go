@@ -2,6 +2,7 @@ package entities
 
 import (
 	"github.com/alexflint/go-restructure"
+	"vhs/pkg/ffhelp"
 	"vhs/pkg/parsetime"
 )
 
@@ -14,8 +15,9 @@ const (
 )
 
 type Info struct {
-	Duration float64    `json:"duration"`
-	Chapters []*Chapter `json:"chapters"`
+	Meta     *ffhelp.Probe `json:"meta"`
+	Duration float64       `json:"duration"`
+	Chapters []*Chapter    `json:"chapters"`
 }
 
 type Chapter struct {

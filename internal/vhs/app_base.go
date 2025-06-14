@@ -172,3 +172,64 @@ func (a *AppBase) UpdateVideo(id string, userId string, data *dto.VideoUpdate) e
 
 	return video.Save()
 }
+
+func (a *AppBase) CreatePlaylist(userId string, data *dto.PlaylistCreate) error {
+	var err error
+	defer func() {
+		if err != nil {
+			PocketBase.Logger().Error(
+				"error while creating playlist: "+err.Error(),
+				map[string]any{
+					"user": userId,
+					"data": data,
+				},
+			)
+		}
+	}()
+
+	playlist, err := NewPlaylist()
+	if err != nil {
+		return err
+	}
+
+	playlist.SetName(data.Name)
+	playlist.SetUser(userId)
+	playlist.SetVideos(data.Videos)
+
+	return playlist.Save()
+}
+
+func (a *AppBase) UpdatePlaylist(id string, userId string, data *dto.PlaylistUpdate) error {
+	var err error
+	defer func() {
+		if err != nil {
+			PocketBase.Logger().Error(
+				"error while updating playlist: "+err.Error(),
+				map[string]any{
+					"playlistId": id,
+					"user":       userId,
+					"data":       data,
+				},
+			)
+		}
+	}()
+
+	playlist, err := NewPlaylistFromId(id)
+	if err != nil {
+		return err
+	}
+
+	if playlist.User() != userId {
+		err = fmt.Errorf("expected user %s, got %s", playlist.User(), userId)
+		return err
+	}
+
+	if data.Name != "" {
+		playlist.SetName(data.Name)
+	}
+	if data.Videos != nil {
+		playlist.SetVideos(data.Videos)
+	}
+
+	return playlist.Save()
+}

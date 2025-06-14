@@ -5,6 +5,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"vhs/internal/vhs/entities"
+	"vhs/pkg/ffhelp"
 )
 
 type VideoBase struct {
@@ -152,6 +153,14 @@ func (v *VideoBase) Chapters() *[]*entities.Chapter {
 
 func (v *VideoBase) SetChapters(chapters []*entities.Chapter) {
 	v.info.Chapters = chapters
+}
+
+func (v *VideoBase) Meta() *ffhelp.Probe {
+	return v.info.Meta
+}
+
+func (v *VideoBase) SetMeta(meta *ffhelp.Probe) {
+	v.info.Meta = meta
 }
 
 func (v *VideoBase) Duration() float64 {

@@ -96,3 +96,32 @@ func (h *Handlers) UpdateVideoHandler(e *core.RequestEvent) error {
 
 	return nil
 }
+
+func (h *Handlers) CreatePlaylistHandler(e *core.RequestEvent) error {
+	var data *dto.PlaylistCreateRequest
+	if err := e.BindBody(&data); err != nil {
+		return e.BadRequestError("invalid request body", err)
+	}
+
+	err := h.app.CreatePlaylist(e.Auth.Id, dto.NewPlaylistCreate(data))
+	if err != nil {
+		return e.InternalServerError("error while creating playlist", err)
+	}
+
+	return nil
+}
+
+func (h *Handlers) UpdatePlaylistHandler(e *core.RequestEvent) error {
+	var data *dto.PlaylistUpdateRequest
+	if err := e.BindBody(&data); err != nil {
+		return e.BadRequestError("invalid request body", err)
+	}
+
+	playlistId := e.Request.PathValue("playlistId")
+	err := h.app.UpdatePlaylist(playlistId, e.Auth.Id, dto.NewPlaylistUpdate(data))
+	if err != nil {
+		return e.InternalServerError("error while updating playlist", err)
+	}
+
+	return nil
+}

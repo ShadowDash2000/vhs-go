@@ -6,16 +6,16 @@ import (
 	"os"
 	"vhs/internal/vhs/entities"
 	"vhs/pkg/errorcollector"
-	"vhs/pkg/ffmpegthumbs"
+	"vhs/pkg/ffhelp"
 	"vhs/pkg/webvtt"
 )
 
 type VideoUploaderBase struct {
 	tmpFile      *os.File
+	ffhelp       *ffhelp.FFHelp
 	bytesWritten int
 	data         *VideoUploadData
 	video        Video
-	duration     float64
 }
 
 const (
@@ -56,6 +56,7 @@ func (v *VideoUploaderBase) Start(data *VideoUploadData) (string, error) {
 		return "", err
 	}
 
+	v.ffhelp = ffhelp.Input(file.Name())
 	v.tmpFile = file
 	v.video = video
 	v.data = data
@@ -109,7 +110,7 @@ func (v *VideoUploaderBase) done() error {
 	if err = v.video.Refresh(); err != nil {
 		return err
 	}
-	if v.duration, err = ffmpegthumbs.GetVideoDurationFloat(v.tmpFile.Name()); err != nil {
+	if err = v.SetMeta(); err != nil {
 		return err
 	}
 	if err = v.SetDuration(); err != nil {
@@ -175,8 +176,7 @@ func (v *VideoUploaderBase) SaveVideoFile() error {
 func (v *VideoUploaderBase) CreateStoryBoard() error {
 	basePath := ThumbsDir + "/" + v.video.ID()
 
-	err := ffmpegthumbs.SplitVideoToThumbnails(
-		v.tmpFile.Name(),
+	err := v.ffhelp.SplitVideoToThumbnails(
 		basePath,
 		FrameDuration,
 	)
@@ -212,7 +212,7 @@ func (v *VideoUploaderBase) CreateWebVTT() error {
 	file, err := webvtt.CreateFromFilePaths(
 		filePaths,
 		WebVTTDir+"/"+v.video.ID(),
-		int(v.duration),
+		int(v.ffhelp.GetVideoDuration()),
 		FrameDuration,
 	)
 	if err != nil {
@@ -256,7 +256,12 @@ func (v *VideoUploaderBase) SetDefaultPreview() error {
 	return v.video.Save()
 }
 
+func (v *VideoUploaderBase) SetMeta() error {
+	v.video.SetMeta(v.ffhelp.Probe())
+	return v.video.Save()
+}
+
 func (v *VideoUploaderBase) SetDuration() error {
-	v.video.SetDuration(v.duration)
+	v.video.SetDuration(v.ffhelp.GetVideoDuration())
 	return v.video.Save()
 }

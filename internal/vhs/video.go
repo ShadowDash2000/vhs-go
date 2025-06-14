@@ -4,6 +4,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"vhs/internal/vhs/entities"
+	"vhs/pkg/ffhelp"
 )
 
 type Video interface {
@@ -30,6 +31,8 @@ type Video interface {
 	SetWebVTT(*filesystem.File)
 	Chapters() *[]*entities.Chapter
 	SetChapters([]*entities.Chapter)
+	Meta() *ffhelp.Probe
+	SetMeta(*ffhelp.Probe)
 	Duration() float64
 	SetDuration(float64)
 }

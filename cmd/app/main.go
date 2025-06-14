@@ -32,6 +32,10 @@ func main() {
 			Bind(middleware.AuthorizeGet()).
 			GET("/stream", handlers.ServeVideoHandler)
 
+		playlist := api.Group("/playlist").Bind(apis.RequireAuth())
+		playlist.POST("", handlers.CreatePlaylistHandler)
+		playlist.Group("/{playlistId}").POST("", handlers.UpdatePlaylistHandler)
+
 		return se.Next()
 	})
 
