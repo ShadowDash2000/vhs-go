@@ -29,8 +29,8 @@ type Video interface {
 	SetUser(string)
 	WebVTT() string
 	SetWebVTT(*filesystem.File)
-	Chapters() *[]*entities.Chapter
-	SetChapters([]*entities.Chapter)
+	Chapters() *[]*entities.VideoChapter
+	SetChapters([]*entities.VideoChapter)
 	Meta() *ffhelp.Probe
 	SetMeta(*ffhelp.Probe)
 	Duration() float64

@@ -5,10 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/ncruces/go-sqlite3/driver"
+	"github.com/ncruces/go-sqlite3/ext/unicode"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"vhs/internal/vhs/entities/dto"
 	"vhs/pkg/collections"
+
+	_ "github.com/ncruces/go-sqlite3/driver"
+	_ "github.com/ncruces/go-sqlite3/embed"
 )
 
 var (
@@ -24,7 +30,18 @@ type Components struct {
 }
 
 func New() App {
-	PocketBase = pocketbase.New()
+	PocketBase = pocketbase.NewWithConfig(pocketbase.Config{
+		DBConnect: func(dbPath string) (*dbx.DB, error) {
+			const pragmas = "?_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)&_pragma=journal_size_limit(200000000)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(ON)&_pragma=temp_store(MEMORY)&_pragma=cache_size(-16000)"
+
+			db, err := driver.Open("file:"+dbPath+pragmas, unicode.Register)
+			if err != nil {
+				return nil, err
+			}
+
+			return dbx.NewFromDB(db, "sqlite3"), nil
+		},
+	})
 	Collections = collections.NewCollections(PocketBase)
 
 	return &AppBase{}

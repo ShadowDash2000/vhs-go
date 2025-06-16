@@ -14,30 +14,30 @@ const (
 	StatusClosed        = "closed"
 )
 
-type Info struct {
-	Meta     *ffhelp.Probe `json:"meta"`
-	Duration float64       `json:"duration"`
-	Chapters []*Chapter    `json:"chapters"`
+type VideoInfo struct {
+	Meta     *ffhelp.Probe   `json:"meta"`
+	Duration float64         `json:"duration"`
+	Chapters []*VideoChapter `json:"chapters"`
 }
 
-type Chapter struct {
+type VideoChapter struct {
 	Start int    `json:"start"`
 	Title string `json:"title"`
 }
 
-func NewChapterFromRaw(c *ChapterRaw) (*Chapter, error) {
+func NewChapterFromRaw(c *VideoChapterRaw) (*VideoChapter, error) {
 	time, err := parsetime.ParseTimeToSeconds(c.Start)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Chapter{
+	return &VideoChapter{
 		Start: time,
 		Title: c.Title,
 	}, nil
 }
 
-type ChapterRaw struct {
+type VideoChapterRaw struct {
 	_     restructure.Pos
 	Start string   `regexp:"(?:(\\d{2}):)?(\\d{2}):(\\d{2})"`
 	_     struct{} `regexp:" - "`

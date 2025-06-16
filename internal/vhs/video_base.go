@@ -10,7 +10,7 @@ import (
 
 type VideoBase struct {
 	core.BaseRecordProxy
-	info entities.Info
+	info entities.VideoInfo
 }
 
 func NewVideoFromRecord(record *core.Record) Video {
@@ -54,11 +54,11 @@ func (v *VideoBase) Refresh() error {
 }
 
 func (v *VideoBase) parseDescription() {
-	regexp := restructure.MustCompile(entities.ChapterRaw{}, restructure.Options{})
-	var chaptersRaw []*entities.ChapterRaw
+	regexp := restructure.MustCompile(entities.VideoChapterRaw{}, restructure.Options{})
+	var chaptersRaw []*entities.VideoChapterRaw
 	regexp.FindAll(&chaptersRaw, v.Description(), -1)
 
-	var chapters []*entities.Chapter
+	var chapters []*entities.VideoChapter
 	for _, chapterRaw := range chaptersRaw {
 		chapter, err := entities.NewChapterFromRaw(chapterRaw)
 		if err != nil {
@@ -147,11 +147,11 @@ func (v *VideoBase) SetWebVTT(file *filesystem.File) {
 	v.Set("webvtt", file)
 }
 
-func (v *VideoBase) Chapters() *[]*entities.Chapter {
+func (v *VideoBase) Chapters() *[]*entities.VideoChapter {
 	return &v.info.Chapters
 }
 
-func (v *VideoBase) SetChapters(chapters []*entities.Chapter) {
+func (v *VideoBase) SetChapters(chapters []*entities.VideoChapter) {
 	v.info.Chapters = chapters
 }
 
