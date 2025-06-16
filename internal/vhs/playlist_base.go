@@ -35,7 +35,7 @@ func NewPlaylistFromId(id string) (Playlist, error) {
 }
 
 func (p *PlaylistBase) Save() error {
-	return p.Save()
+	return PocketBase.Save(p)
 }
 
 func (p *PlaylistBase) Delete() error {
