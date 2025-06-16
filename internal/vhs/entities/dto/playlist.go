@@ -1,8 +1,8 @@
 package dto
 
 type PlaylistCreateRequest struct {
-	Name   string `json:"name"`
-	Videos []string
+	Name   string   `form:"name" json:"name"`
+	Videos []string `form:"videos" json:"videos"`
 }
 
 type PlaylistCreate struct {
@@ -18,8 +18,8 @@ func NewPlaylistCreate(req *PlaylistCreateRequest) *PlaylistCreate {
 }
 
 type PlaylistUpdateRequest struct {
-	Name   string   `json:"name"`
-	Videos []string `json:"videos"`
+	Name   string   `form:"name" json:"name"`
+	Videos []string `form:"videos" json:"videos"`
 }
 
 type PlaylistUpdate struct {

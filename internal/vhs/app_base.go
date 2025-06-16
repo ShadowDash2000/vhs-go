@@ -10,6 +10,8 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"os"
+	"strings"
 	"vhs/internal/vhs/entities/dto"
 	"vhs/pkg/collections"
 
@@ -31,6 +33,7 @@ type Components struct {
 
 func New() App {
 	PocketBase = pocketbase.NewWithConfig(pocketbase.Config{
+		DefaultDev: inspectRuntime(),
 		DBConnect: func(dbPath string) (*dbx.DB, error) {
 			const pragmas = "?_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)&_pragma=journal_size_limit(200000000)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(ON)&_pragma=temp_store(MEMORY)&_pragma=cache_size(-16000)"
 
@@ -53,6 +56,17 @@ func (a *AppBase) Start() error {
 
 func (a *AppBase) IsDev() bool {
 	return PocketBase.IsDev()
+}
+
+func inspectRuntime() (withGoRun bool) {
+	if strings.HasPrefix(os.Args[0], os.TempDir()) {
+		// probably ran with go run
+		withGoRun = true
+	} else {
+		// probably ran with go build
+		withGoRun = false
+	}
+	return
 }
 
 const (
