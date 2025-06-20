@@ -13,4 +13,7 @@ type Playlist interface {
 	SetUser(string)
 	Videos() []string
 	SetVideos([]string)
+	AddVideo(string)
+	AddVideos([]string)
+	RemoveVideo(string)
 }

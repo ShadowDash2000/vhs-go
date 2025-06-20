@@ -10,9 +10,11 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"golang.org/x/exp/slices"
 	"os"
 	"strings"
 	"vhs/internal/vhs/entities/dto"
+	"vhs/internal/vhs/helper"
 	"vhs/pkg/collections"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
@@ -200,8 +202,62 @@ func (a *AppBase) UpdateVideo(id string, userId string, data *dto.VideoUpdate) e
 	if data.Preview.Size > 0 {
 		video.SetPreview(data.Preview)
 	}
+	err = a.removeVideoFromPlaylists(data.PlaylistIds, video)
+	if err != nil {
+		return err
+	}
+	if len(data.PlaylistIds) > 0 {
+		err = a.addVideoToPlaylists(userId, data.PlaylistIds, video)
+		if err != nil {
+			return err
+		}
+	}
 
 	return video.Save()
+}
+
+func (a *AppBase) removeVideoFromPlaylists(playlistIds []string, video Video) error {
+	currentPlaylists, err := NewPlaylistsFromVideoId(video.ID())
+	if err != nil {
+		return err
+	}
+
+	for _, playlist := range currentPlaylists {
+		if !slices.Contains(playlistIds, playlist.ID()) {
+			playlist.RemoveVideo(video.ID())
+			err = playlist.Save()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (a *AppBase) addVideoToPlaylists(userId string, playlistIds []string, video Video) error {
+	var playlists []Playlist
+	playlists, err := NewPlaylistFromIds(playlistIds)
+	if err != nil {
+		return err
+	}
+
+	err = helper.VerifyFields(
+		playlists,
+		userId,
+		func(playlist Playlist) string {
+			return playlist.User()
+		},
+		func(playlist Playlist) error {
+			playlist.AddVideo(video.ID())
+			return playlist.Save()
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *AppBase) CreatePlaylist(userId string, data *dto.PlaylistCreate) error {
