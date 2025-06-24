@@ -18,7 +18,6 @@ type Video interface {
 	SetDescription(string)
 	Preview() string
 	SetPreview(*filesystem.File)
-	SetPreviewFromId(string)
 	Thumbnails() []string
 	SetThumbnails([]*filesystem.File)
 	Video() string
@@ -35,4 +34,5 @@ type Video interface {
 	SetMeta(*ffhelp.Probe)
 	Duration() float64
 	SetDuration(float64)
+	BaseFilesPath() string
 }

@@ -103,10 +103,6 @@ func (v *VideoBase) SetPreview(file *filesystem.File) {
 	v.Set("preview", file)
 }
 
-func (v *VideoBase) SetPreviewFromId(id string) {
-	v.Set("preview", id)
-}
-
 func (v *VideoBase) Thumbnails() []string {
 	return v.GetStringSlice("thumbnails")
 }
@@ -169,4 +165,8 @@ func (v *VideoBase) Duration() float64 {
 
 func (v *VideoBase) SetDuration(duration float64) {
 	v.info.Duration = duration
+}
+
+func (v *VideoBase) BaseFilesPath() string {
+	return v.BaseRecordProxy.BaseFilesPath()
 }

@@ -1,6 +1,9 @@
 package vhs
 
-import "github.com/pocketbase/pocketbase/core"
+import (
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
+)
 
 type Playlist interface {
 	core.RecordProxy
@@ -16,4 +19,6 @@ type Playlist interface {
 	AddVideo(string)
 	AddVideos([]string)
 	RemoveVideo(string)
+	Preview() string
+	SetPreview(*filesystem.File)
 }

@@ -1046,6 +1046,22 @@ func init() {
 						"required": false,
 						"system": false,
 						"type": "relation"
+					},
+					{
+						"hidden": false,
+						"id": "file3112513328",
+						"maxSelect": 1,
+						"maxSize": 0,
+						"mimeTypes": [],
+						"name": "preview",
+						"presentable": false,
+						"protected": false,
+						"required": false,
+						"system": false,
+						"thumbs": [
+							"1280x0"
+						],
+						"type": "file"
 					}
 				],
 				"id": "pbc_976091127",

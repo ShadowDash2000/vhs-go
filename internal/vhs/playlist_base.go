@@ -3,6 +3,7 @@ package vhs
 import (
 	"fmt"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"golang.org/x/exp/slices"
 	"vhs/internal/vhs/entities"
 )
@@ -118,4 +119,12 @@ func (p *PlaylistBase) RemoveVideo(id string) {
 			return s == id
 		}),
 	)
+}
+
+func (p *PlaylistBase) Preview() string {
+	return p.GetString("preview")
+}
+
+func (p *PlaylistBase) SetPreview(file *filesystem.File) {
+	p.Set("preview", file)
 }

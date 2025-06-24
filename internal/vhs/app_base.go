@@ -10,9 +10,11 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"golang.org/x/exp/slices"
 	"os"
 	"strings"
+	"vhs/internal/vhs/entities"
 	"vhs/internal/vhs/entities/dto"
 	"vhs/internal/vhs/helper"
 	"vhs/pkg/collections"
@@ -49,7 +51,17 @@ func New() App {
 	})
 	Collections = collections.NewCollections(PocketBase)
 
-	return &AppBase{}
+	app := &AppBase{}
+
+	app.bindHooks()
+
+	return app
+}
+
+func (a *AppBase) bindHooks() {
+	PocketBase.OnRecordCreate(entities.PlaylistsCollection).BindFunc(a.updatePlaylistPreview)
+	PocketBase.OnRecordUpdate(entities.PlaylistsCollection).BindFunc(a.updatePlaylistPreview)
+	PocketBase.OnRecordAfterUpdateSuccess(entities.VideosCollection).BindFunc(a.updatePlaylistPreviewFromVideo)
 }
 
 func (a *AppBase) Start() error {
@@ -319,4 +331,62 @@ func (a *AppBase) UpdatePlaylist(id string, userId string, data *dto.PlaylistUpd
 	}
 
 	return playlist.Save()
+}
+
+func (a *AppBase) updatePlaylistPreviewFromVideoRecord(playlist Playlist, video Video) error {
+	key := video.BaseFilesPath() + "/" + video.Preview()
+
+	fs, _ := PocketBase.NewFilesystem()
+	defer fs.Close()
+
+	blob, _ := fs.GetReader(key)
+	defer blob.Close()
+
+	buff := make([]byte, blob.Size())
+	_, err := blob.Read(buff)
+	if err != nil {
+		return err
+	}
+
+	file, err := filesystem.NewFileFromBytes(buff, "playlist-preview-"+playlist.ID())
+	if err != nil {
+		return err
+	}
+
+	playlist.SetPreview(file)
+	return nil
+}
+
+func (a *AppBase) updatePlaylistPreview(e *core.RecordEvent) error {
+	playlist := NewPlaylistFromRecord(e.Record)
+
+	if len(playlist.Videos()) == 0 {
+		return e.Next()
+	}
+
+	video, err := NewVideoFromId(playlist.Videos()[0])
+	if err != nil {
+		return err
+	}
+
+	err = a.updatePlaylistPreviewFromVideoRecord(playlist, video)
+	if err != nil {
+		return err
+	}
+
+	return e.Next()
+}
+
+func (a *AppBase) updatePlaylistPreviewFromVideo(e *core.RecordEvent) error {
+	video := NewVideoFromRecord(e.Record)
+	playlists, err := NewPlaylistsFromVideoId(video.ID())
+	if err != nil {
+		return err
+	}
+
+	for _, playlist := range playlists {
+		playlist.Save()
+	}
+
+	return e.Next()
 }
