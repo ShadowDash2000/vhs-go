@@ -4,6 +4,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"os"
+	"vhs/internal/assets"
 	"vhs/internal/vhs/entities"
 	"vhs/pkg/errorcollector"
 	"vhs/pkg/ffhelp"
@@ -51,6 +52,11 @@ func (v *VideoUploaderBase) Start(data *VideoUploadData) (string, error) {
 	video.SetStatus(entities.StatusClosed)
 	video.SetUser(data.UserId)
 	video.SetName(data.Name)
+	preview, err := filesystem.NewFileFromBytes(assets.DefaultPreview, "default_preview")
+	if err != nil {
+		return "", err
+	}
+	video.SetPreview(preview)
 
 	if err = video.Save(); err != nil {
 		return "", err
