@@ -62,6 +62,7 @@ func (a *AppBase) bindHooks() {
 	PocketBase.OnRecordCreate(entities.PlaylistsCollection).BindFunc(a.updatePlaylistPreview)
 	PocketBase.OnRecordUpdate(entities.PlaylistsCollection).BindFunc(a.updatePlaylistPreview)
 	PocketBase.OnRecordAfterUpdateSuccess(entities.VideosCollection).BindFunc(a.updatePlaylistPreviewFromVideo)
+	PocketBase.OnRecordEnrich(entities.VideosCollection).BindFunc(a.enrichVideo)
 }
 
 func (a *AppBase) Start() error {
@@ -387,6 +388,23 @@ func (a *AppBase) updatePlaylistPreviewFromVideo(e *core.RecordEvent) error {
 	for _, playlist := range playlists {
 		playlist.Save()
 	}
+
+	return e.Next()
+}
+
+func (a *AppBase) enrichVideo(e *core.RecordEnrichEvent) error {
+	playlists, err := NewPlaylistsFromVideoId(e.Record.Id)
+	if err != nil {
+		return err
+	}
+
+	playlistIds := make([]string, len(playlists))
+	for _, playlist := range playlists {
+		playlistIds = append(playlistIds, playlist.ID())
+	}
+
+	e.Record.WithCustomData(true)
+	e.Record.Set("playlists", playlistIds)
 
 	return e.Next()
 }
