@@ -4,6 +4,8 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	"log"
+
+	_ "vhs/migrations"
 )
 
 func main() {

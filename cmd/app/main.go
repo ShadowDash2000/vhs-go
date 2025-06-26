@@ -7,8 +7,6 @@ import (
 	"vhs/internal/http/handlers/v1"
 	"vhs/internal/middleware"
 	"vhs/internal/vhs"
-
-	_ "vhs/migrations"
 )
 
 func main() {
