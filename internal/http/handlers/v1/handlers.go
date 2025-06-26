@@ -15,9 +15,7 @@ type Handlers struct {
 }
 
 func New(app vhs.App) *Handlers {
-	if app.IsDev() {
-		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	}
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	return &Handlers{
 		app: app,
