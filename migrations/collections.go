@@ -958,6 +958,15 @@ func init() {
 						"required": false,
 						"system": false,
 						"type": "json"
+					},
+					{
+						"hidden": false,
+						"id": "bool346443220",
+						"name": "preview_is_set",
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "bool"
 					}
 				],
 				"id": "pbc_515447164",

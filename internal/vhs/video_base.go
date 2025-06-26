@@ -170,3 +170,11 @@ func (v *VideoBase) SetDuration(duration float64) {
 func (v *VideoBase) BaseFilesPath() string {
 	return v.BaseRecordProxy.BaseFilesPath()
 }
+
+func (v *VideoBase) PreviewIsSet() bool {
+	return v.GetBool("preview_is_set")
+}
+
+func (v *VideoBase) SetPreviewIsSet(b bool) {
+	v.Set("preview_is_set", b)
+}

@@ -214,6 +214,7 @@ func (a *AppBase) UpdateVideo(id string, userId string, data *dto.VideoUpdate) e
 	}
 	if data.Preview.Size > 0 {
 		video.SetPreview(data.Preview)
+		video.SetPreviewIsSet(true)
 	}
 	err = a.removeVideoFromPlaylists(data.PlaylistIds, video)
 	if err != nil {

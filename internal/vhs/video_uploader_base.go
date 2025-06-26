@@ -237,7 +237,7 @@ func (v *VideoUploaderBase) CreateWebVTT() error {
 
 func (v *VideoUploaderBase) SetDefaultPreview() error {
 	// If the preview isn't empty, this means it was set by the user.
-	if v.video.Preview() != "" {
+	if v.video.PreviewIsSet() {
 		return nil
 	}
 
