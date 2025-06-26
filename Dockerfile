@@ -7,7 +7,8 @@ WORKDIR /vhs/
 RUN go mod download
 
 RUN apk update \
-    && apk upgrade
+    && apk upgrade \
+    && apk add ffmpeg
 
 RUN go build -a -installsuffix cgo -o ./vhs cmd/app/main.go
 
