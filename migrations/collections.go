@@ -874,7 +874,7 @@ func init() {
 					{
 						"hidden": false,
 						"id": "file1386536800",
-						"maxSelect": 99,
+						"maxSelect": 999999999999999,
 						"maxSize": 0,
 						"mimeTypes": [
 							"image/jpeg",

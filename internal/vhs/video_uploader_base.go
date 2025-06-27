@@ -3,6 +3,7 @@ package vhs
 import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
+	"log/slog"
 	"os"
 	"vhs/internal/assets"
 	"vhs/internal/vhs/entities"
@@ -17,6 +18,7 @@ type VideoUploaderBase struct {
 	bytesWritten int
 	data         *VideoUploadData
 	video        Video
+	logger       *slog.Logger
 }
 
 const (
@@ -27,8 +29,28 @@ const (
 	FrameDuration = 5
 )
 
-func NewVideoUploader() VideoUploader {
+func NewVideoUploader(logger *slog.Logger) VideoUploader {
 	return &VideoUploaderBase{}
+}
+
+type VideoUploaderBaseMock struct {
+	TmpFile      *os.File
+	Ffhelp       *ffhelp.FFHelp
+	BytesWritten int
+	Data         *VideoUploadData
+	Video        Video
+	Logger       *slog.Logger
+}
+
+func NewVideoUploaderMock(v *VideoUploaderBaseMock) *VideoUploaderBase {
+	return &VideoUploaderBase{
+		tmpFile:      v.TmpFile,
+		ffhelp:       v.Ffhelp,
+		bytesWritten: v.BytesWritten,
+		data:         v.Data,
+		video:        v.Video,
+		logger:       v.Logger,
+	}
 }
 
 func (v *VideoUploaderBase) Start(data *VideoUploadData) (string, error) {
@@ -97,18 +119,16 @@ func (v *VideoUploaderBase) done() error {
 	var err error
 	defer func() {
 		if err != nil {
-			PocketBase.Logger().Error(
+			v.logger.Error(
 				"error while video processing: "+err.Error(),
-				map[string]any{
-					"video": v.video,
-				},
+				"video", v.video,
 			)
 		}
 
 		if err = v.clear(); err != nil {
-			PocketBase.Logger().Error(
+			v.logger.Error(
 				"error while clearing video files: "+err.Error(),
-				v.video,
+				"video", v.video,
 			)
 		}
 	}()
@@ -143,11 +163,9 @@ func (v *VideoUploaderBase) clear() error {
 
 	defer func() {
 		if ec.HasErrors() {
-			PocketBase.Logger().Error(
+			v.logger.Error(
 				"error while clearing video files: "+ec.Error().Error(),
-				map[string]any{
-					"video": v.video,
-				},
+				"video", v.video,
 			)
 		}
 	}()

@@ -62,10 +62,11 @@ func (v *VideoBase) parseDescription() {
 	for _, chapterRaw := range chaptersRaw {
 		chapter, err := entities.NewChapterFromRaw(chapterRaw)
 		if err != nil {
-			PocketBase.Logger().Error("parseDescription", map[string]interface{}{
-				"chapter": chapter,
-				"error":   err,
-			})
+			PocketBase.Logger().Error(
+				"parseDescription",
+				"chapter", chapter,
+				"error", err,
+			)
 			continue
 		}
 

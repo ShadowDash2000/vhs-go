@@ -12,6 +12,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"golang.org/x/exp/slices"
+	"log/slog"
 	"os"
 	"strings"
 	"vhs/internal/vhs/entities"
@@ -28,7 +29,9 @@ var (
 	Collections *collections.Collections
 )
 
-type AppBase struct{}
+type AppBase struct {
+	logger *slog.Logger
+}
 
 type Components struct {
 	App  core.App
@@ -51,7 +54,9 @@ func New() App {
 	})
 	Collections = collections.NewCollections(PocketBase)
 
-	app := &AppBase{}
+	app := &AppBase{
+		logger: PocketBase.Logger(),
+	}
 
 	app.bindHooks()
 
@@ -103,7 +108,7 @@ func (a *AppBase) UploadVideo(c *websocket.Conn) error {
 	)
 
 	res := map[string]interface{}{}
-	v = NewVideoUploader()
+	v = NewVideoUploader(a.logger)
 
 	for {
 		mt, message, err = c.ReadMessage()
@@ -182,13 +187,11 @@ func (a *AppBase) UpdateVideo(id string, userId string, data *dto.VideoUpdate) e
 	var err error
 	defer func() {
 		if err != nil {
-			PocketBase.Logger().Error(
+			a.logger.Error(
 				"error while updating video: "+err.Error(),
-				map[string]any{
-					"videoId": id,
-					"user":    userId,
-					"data":    data,
-				},
+				"videoId", id,
+				"user", userId,
+				"data", data,
 			)
 		}
 	}()
@@ -278,12 +281,10 @@ func (a *AppBase) CreatePlaylist(userId string, data *dto.PlaylistCreate) error 
 	var err error
 	defer func() {
 		if err != nil {
-			PocketBase.Logger().Error(
+			a.logger.Error(
 				"error while creating playlist: "+err.Error(),
-				map[string]any{
-					"user": userId,
-					"data": data,
-				},
+				"user", userId,
+				"data", data,
 			)
 		}
 	}()
@@ -304,13 +305,11 @@ func (a *AppBase) UpdatePlaylist(id string, userId string, data *dto.PlaylistUpd
 	var err error
 	defer func() {
 		if err != nil {
-			PocketBase.Logger().Error(
+			a.logger.Error(
 				"error while updating playlist: "+err.Error(),
-				map[string]any{
-					"playlistId": id,
-					"user":       userId,
-					"data":       data,
-				},
+				"playlistId", id,
+				"user", userId,
+				"data", data,
 			)
 		}
 	}()
