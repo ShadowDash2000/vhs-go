@@ -30,7 +30,9 @@ const (
 )
 
 func NewVideoUploader(logger *slog.Logger) VideoUploader {
-	return &VideoUploaderBase{}
+	return &VideoUploaderBase{
+		logger: logger,
+	}
 }
 
 type VideoUploaderBaseMock struct {
