@@ -23,16 +23,21 @@ func TestCreateStoryBoard(t *testing.T) {
 	videoMock := NewVideoBaseMockFromRecord(record)
 	videoMock.Id = "testId"
 
+	ffhelp, err := ffhelp.Input("assets/black_30m.mp4")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	videoUploader := vhs.NewVideoUploaderMock(&vhs.VideoUploaderBaseMock{
 		TmpFile:      nil,
-		Ffhelp:       ffhelp.Input("assets/black_30m.mp4"),
+		Ffhelp:       ffhelp,
 		BytesWritten: 0,
 		Data:         nil,
 		Video:        videoMock,
 		Logger:       slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
 
-	err = videoUploader.CreateStoryBoard()
+	err = videoUploader.CreateSprites()
 	if err != nil {
 		t.Error(err)
 	}

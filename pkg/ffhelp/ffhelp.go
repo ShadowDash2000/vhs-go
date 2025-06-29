@@ -6,6 +6,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"os"
+	"path/filepath"
 )
 
 type Probe struct {
@@ -51,20 +52,21 @@ type FFHelp struct {
 	filename string
 }
 
-func Input(filename string) *FFHelp {
+func Input(filename string) (*FFHelp, error) {
+	p, err := probe(filename)
+	if err != nil {
+		return nil, err
+	}
+
 	return &FFHelp{
 		stream:   ffmpeg.Input(filename),
-		p:        nil,
+		p:        p,
 		filename: filename,
-	}
+	}, nil
 }
 
-func (ff *FFHelp) probe() (*Probe, error) {
-	if ff.p != nil {
-		return ff.p, nil
-	}
-
-	metaJson, err := ffmpeg.Probe(ff.filename)
+func probe(filename string) (*Probe, error) {
+	metaJson, err := ffmpeg.Probe(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -75,28 +77,33 @@ func (ff *FFHelp) probe() (*Probe, error) {
 		return nil, err
 	}
 
-	err = mapstructure.WeakDecode(m, &ff.p)
+	p := &Probe{}
+	err = mapstructure.WeakDecode(m, p)
 	if err != nil {
 		return nil, err
 	}
 
-	return ff.p, nil
+	return p, nil
 }
 
-func (ff *FFHelp) SplitVideoToThumbnails(output string, frameDuration float64) error {
+func (ff *FFHelp) SplitVideoToThumbnails(output string, frameDuration float64, thumbWidth, thumbHeight int) error {
 	err := os.MkdirAll(output, os.ModePerm)
 	if err != nil {
 		return err
 	}
 
 	duration := ff.GetVideoDuration()
+	scaleArg := fmt.Sprintf("scale=%d:%d", thumbWidth, thumbHeight)
 	i := 0
 	for second := 1.0; second < duration; second = second + frameDuration {
 		imagePath := fmt.Sprintf("%s/img%06d.jpg", output, i)
 
 		ffmpeg.
 			Input(ff.filename, ffmpeg.KwArgs{"ss": second}).
-			Output(imagePath, ffmpeg.KwArgs{"vframes": "1", "q:v": frameDuration}).
+			Output(imagePath, ffmpeg.KwArgs{
+				"vframes": "1",
+				"vf":      scaleArg,
+			}).
 			Silent(true).
 			Run()
 
@@ -106,14 +113,29 @@ func (ff *FFHelp) SplitVideoToThumbnails(output string, frameDuration float64) e
 	return nil
 }
 
-func (ff *FFHelp) GetVideoDuration() float64 {
-	probe, err := ff.probe()
+func (ff *FFHelp) SaveFrame(outFile string, second float64, thumbWidth, thumbHeight int) (*os.File, error) {
+	err := os.MkdirAll(filepath.Dir(outFile), os.ModePerm)
 	if err != nil {
-		return 0
+		return nil, err
 	}
 
+	scaleArg := fmt.Sprintf("scale=%d:%d", thumbWidth, thumbHeight)
+
+	ffmpeg.
+		Input(ff.filename, ffmpeg.KwArgs{"ss": second}).
+		Output(outFile, ffmpeg.KwArgs{
+			"vframes": "1",
+			"vf":      scaleArg,
+		}).
+		Silent(true).
+		Run()
+
+	return os.Open(outFile)
+}
+
+func (ff *FFHelp) GetVideoDuration() float64 {
 	var duration float64
-	for _, stream := range probe.Streams {
+	for _, stream := range ff.p.Streams {
 		if stream.CodecType == "video" {
 			duration = stream.Duration
 			break
@@ -123,11 +145,30 @@ func (ff *FFHelp) GetVideoDuration() float64 {
 	return duration
 }
 
-func (ff *FFHelp) Probe() *Probe {
-	probe, err := ff.probe()
-	if err != nil {
-		return &Probe{}
+func (ff *FFHelp) GetVideoWidth() int {
+	var width int
+	for _, stream := range ff.p.Streams {
+		if stream.CodecType == "video" {
+			width = stream.Width
+			break
+		}
 	}
 
-	return probe
+	return width
+}
+
+func (ff *FFHelp) GetVideoHeight() int {
+	var height int
+	for _, stream := range ff.p.Streams {
+		if stream.CodecType == "video" {
+			height = stream.Height
+			break
+		}
+	}
+
+	return height
+}
+
+func (ff *FFHelp) Probe() *Probe {
+	return ff.p
 }

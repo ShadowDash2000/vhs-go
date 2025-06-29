@@ -1,6 +1,7 @@
 package vhs
 
 import (
+	"fmt"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"log/slog"
@@ -22,11 +23,21 @@ type VideoUploaderBase struct {
 }
 
 const (
-	UploadDir = "upload/video"
-	ThumbsDir = UploadDir + "/thumbs"
-	WebVTTDir = UploadDir + "/webvtt"
+	UploadDir       = "upload/video"
+	ThumbsDir       = UploadDir + "/thumbs"
+	SpriteSheetsDir = UploadDir + "/sheets"
+	WebVTTDir       = UploadDir + "/webvtt"
 
 	FrameDuration = 5
+
+	DefaultPreviewWidth  = 1280
+	DefaultPreviewHeight = 720
+
+	SpriteSheetCols     = 10
+	SpriteSheetRows     = 40
+	SpriteWidth         = 180
+	SpriteHeight        = 101
+	SpriteSheetImgCount = SpriteSheetCols * SpriteSheetRows
 )
 
 func NewVideoUploader(logger *slog.Logger) VideoUploader {
@@ -86,7 +97,6 @@ func (v *VideoUploaderBase) Start(data *VideoUploadData) (string, error) {
 		return "", err
 	}
 
-	v.ffhelp = ffhelp.Input(file.Name())
 	v.tmpFile = file
 	v.video = video
 	v.data = data
@@ -135,6 +145,9 @@ func (v *VideoUploaderBase) done() error {
 		}
 	}()
 
+	if v.ffhelp, err = ffhelp.Input(v.tmpFile.Name()); err != nil {
+		return err
+	}
 	if err = v.video.Refresh(); err != nil {
 		return err
 	}
@@ -147,7 +160,10 @@ func (v *VideoUploaderBase) done() error {
 	if err = v.SaveVideoFile(); err != nil {
 		return err
 	}
-	if err = v.CreateStoryBoard(); err != nil {
+	if err = v.CreateSprites(); err != nil {
+		return err
+	}
+	if err = v.CreateSpriteSheet(); err != nil {
 		return err
 	}
 	if err = v.CreateWebVTT(); err != nil {
@@ -179,10 +195,13 @@ func (v *VideoUploaderBase) clear() error {
 		return os.Remove(v.tmpFile.Name())
 	})
 	ec.Collect(func() error {
-		return os.RemoveAll(ThumbsDir + "/" + v.video.ID())
+		return os.RemoveAll(v.thumbsDir())
 	})
 	ec.Collect(func() error {
-		return os.RemoveAll(WebVTTDir + "/" + v.video.ID())
+		return os.RemoveAll(v.sheetsDir())
+	})
+	ec.Collect(func() error {
+		return os.RemoveAll(v.webvttDir())
 	})
 
 	return ec.Error()
@@ -199,29 +218,53 @@ func (v *VideoUploaderBase) SaveVideoFile() error {
 	return v.video.Save()
 }
 
-func (v *VideoUploaderBase) CreateStoryBoard() error {
-	basePath := ThumbsDir + "/" + v.video.ID()
-
+func (v *VideoUploaderBase) CreateSprites() error {
 	err := v.ffhelp.SplitVideoToThumbnails(
-		basePath,
+		v.thumbsDir(),
 		FrameDuration,
+		SpriteWidth,
+		SpriteHeight,
 	)
 	if err != nil {
 		return err
 	}
 
-	entries, err := os.ReadDir(basePath)
-	if err != nil {
-		return err
+	return v.video.Save()
+}
+
+func (v *VideoUploaderBase) CreateSpriteSheet() error {
+	entries, err := v.readThumbsDir()
+
+	sheetsCount := (len(entries) + SpriteSheetImgCount - 1) / SpriteSheetImgCount
+	filePaths := make([][]string, sheetsCount)
+	i := 0
+	for j, entry := range entries {
+		filePaths[i] = append(filePaths[i], v.thumbsDir()+"/"+entry.Name())
+
+		if j%SpriteSheetImgCount == SpriteSheetImgCount-1 {
+			i++
+		}
 	}
 
 	var files []*filesystem.File
-	for _, entry := range entries {
-		file, err := filesystem.NewFileFromPath(basePath + "/" + entry.Name())
+	for i := 0; i < sheetsCount; i++ {
+		sheetPath := fmt.Sprintf("%s/sheet%06d.jpg", v.sheetsDir(), i)
+
+		err = webvtt.CreateSpriteSheet(
+			filePaths[i],
+			sheetPath,
+			SpriteSheetCols, SpriteSheetRows, SpriteWidth, SpriteHeight,
+		)
 		if err != nil {
 			return err
 		}
-		files = append(files, file)
+
+		f, err := filesystem.NewFileFromPath(sheetPath)
+		if err != nil {
+			return err
+		}
+
+		files = append(files, f)
 	}
 
 	v.video.SetThumbnails(files)
@@ -230,16 +273,18 @@ func (v *VideoUploaderBase) CreateStoryBoard() error {
 }
 
 func (v *VideoUploaderBase) CreateWebVTT() error {
-	var filePaths []string
-	for _, fileId := range v.video.Thumbnails() {
-		filePaths = append(filePaths, "/api/files/"+v.video.ProxyRecord().BaseFilesPath()+"/"+fileId)
+	var sheetPaths []string
+	for _, imgId := range v.video.Thumbnails() {
+		sheetPaths = append(sheetPaths, "/api/files/"+v.video.BaseFilesPath()+"/"+imgId)
 	}
 
-	file, err := webvtt.CreateFromFilePaths(
-		filePaths,
-		WebVTTDir+"/"+v.video.ID(),
+	outFile := fmt.Sprintf("%s/webvtt.vtt", v.webvttDir())
+	file, err := webvtt.CreateFromSheets(
+		sheetPaths,
+		outFile,
 		int(v.ffhelp.GetVideoDuration()),
 		FrameDuration,
+		v.thumbsCount(), SpriteSheetCols, SpriteSheetRows, SpriteWidth, SpriteHeight,
 	)
 	if err != nil {
 		return err
@@ -261,18 +306,18 @@ func (v *VideoUploaderBase) SetDefaultPreview() error {
 		return nil
 	}
 
-	basePath := ThumbsDir + "/" + v.video.ID()
-	entries, err := os.ReadDir(basePath)
+	file, err := v.ffhelp.SaveFrame(
+		v.defaultPreviewPath(),
+		v.ffhelp.GetVideoDuration()/2,
+		DefaultPreviewWidth,
+		DefaultPreviewHeight,
+	)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
-	if len(entries) == 0 {
-		return nil
-	}
-
-	thumb := entries[len(entries)/2]
-	f, err := filesystem.NewFileFromPath(basePath + "/" + thumb.Name())
+	f, err := filesystem.NewFileFromPath(file.Name())
 	if err != nil {
 		return err
 	}
@@ -290,4 +335,33 @@ func (v *VideoUploaderBase) SetMeta() error {
 func (v *VideoUploaderBase) SetDuration() error {
 	v.video.SetDuration(v.ffhelp.GetVideoDuration())
 	return v.video.Save()
+}
+
+func (v *VideoUploaderBase) thumbsDir() string {
+	return ThumbsDir + "/" + v.video.ID()
+}
+
+func (v *VideoUploaderBase) sheetsDir() string {
+	return SpriteSheetsDir + "/" + v.video.ID()
+}
+
+func (v *VideoUploaderBase) webvttDir() string {
+	return WebVTTDir + "/" + v.video.ID()
+}
+
+func (v *VideoUploaderBase) defaultPreviewPath() string {
+	return UploadDir + "/" + "preview_" + v.video.ID() + ".jpg"
+}
+
+func (v *VideoUploaderBase) readThumbsDir() ([]os.DirEntry, error) {
+	return os.ReadDir(v.thumbsDir())
+}
+
+func (v *VideoUploaderBase) thumbsCount() int {
+	entries, err := v.readThumbsDir()
+	if err != nil {
+		return 0
+	}
+
+	return len(entries)
 }
