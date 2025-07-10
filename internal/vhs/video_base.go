@@ -102,6 +102,7 @@ func (v *VideoBase) Preview() string {
 
 func (v *VideoBase) SetPreview(file *filesystem.File) {
 	v.Set("preview", file)
+	v.Set("preview_is_set", true)
 }
 
 func (v *VideoBase) Thumbnails() []string {
@@ -174,8 +175,4 @@ func (v *VideoBase) BaseFilesPath() string {
 
 func (v *VideoBase) PreviewIsSet() bool {
 	return v.GetBool("preview_is_set")
-}
-
-func (v *VideoBase) SetPreviewIsSet(b bool) {
-	v.Set("preview_is_set", b)
 }

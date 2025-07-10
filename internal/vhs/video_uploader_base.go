@@ -8,6 +8,7 @@ import (
 	"os"
 	"vhs/internal/assets"
 	"vhs/internal/vhs/entities"
+	"vhs/internal/vhs/helper"
 	"vhs/pkg/errorcollector"
 	"vhs/pkg/ffhelp"
 	"vhs/pkg/webvtt"
@@ -100,8 +101,25 @@ func (v *VideoUploaderBase) Start(data *VideoUploadData) (string, error) {
 	v.tmpFile = file
 	v.video = video
 	v.data = data
+	v.bindHooks()
 
 	return video.ID(), nil
+}
+
+func (v *VideoUploaderBase) bindHooks() {
+	PocketBase.
+		OnRecordAfterUpdateSuccess(entities.VideosCollection).
+		BindFunc(func(e *core.RecordEvent) error {
+			if e.Record.Id != v.video.ID() {
+				return e.Next()
+			}
+
+			helper.UpdateRecordFromOther(v.video.ProxyRecord(), e.Record,
+				"name", "description", "status", "preview", "preview_is_set",
+			)
+
+			return e.Next()
+		})
 }
 
 func (v *VideoUploaderBase) UploadPart(p []byte) (bool, error) {
@@ -146,9 +164,6 @@ func (v *VideoUploaderBase) done() error {
 	}()
 
 	if v.ffhelp, err = ffhelp.Input(v.tmpFile.Name()); err != nil {
-		return err
-	}
-	if err = v.video.Refresh(); err != nil {
 		return err
 	}
 	if err = v.SetMeta(); err != nil {

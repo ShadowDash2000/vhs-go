@@ -36,5 +36,4 @@ type Video interface {
 	SetDuration(float64)
 	BaseFilesPath() string
 	PreviewIsSet() bool
-	SetPreviewIsSet(bool)
 }
