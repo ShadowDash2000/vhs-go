@@ -1,8 +1,9 @@
 package dto
 
 import (
-	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"vhs/internal/vhs/entities"
+
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 )
 
 type VideoUpdateRequest struct {

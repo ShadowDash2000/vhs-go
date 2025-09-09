@@ -1,10 +1,11 @@
 package vhs
 
 import (
-	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"vhs/internal/vhs/entities"
 	"vhs/pkg/ffhelp"
+
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 )
 
 type Video interface {
@@ -22,6 +23,7 @@ type Video interface {
 	SetThumbnails([]*filesystem.File)
 	Video() string
 	SetVideo(*filesystem.File)
+	SetVideoPath(string)
 	Status() entities.Status
 	SetStatus(entities.Status)
 	User() string

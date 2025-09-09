@@ -1,9 +1,10 @@
 package entities
 
 import (
-	"github.com/alexflint/go-restructure"
 	"vhs/pkg/ffhelp"
 	"vhs/pkg/parsetime"
+
+	"github.com/alexflint/go-restructure"
 )
 
 type Status string

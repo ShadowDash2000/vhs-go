@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/pocketbase/pocketbase/apis"
-	"github.com/pocketbase/pocketbase/core"
 	"log"
 	"vhs/internal/http/handlers/v1"
 	"vhs/internal/middleware"
 	"vhs/internal/vhs"
+
+	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/core"
 )
 
 func main() {

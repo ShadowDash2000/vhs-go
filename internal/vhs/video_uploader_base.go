@@ -2,8 +2,6 @@ package vhs
 
 import (
 	"fmt"
-	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"log/slog"
 	"os"
 	"vhs/internal/assets"
@@ -12,6 +10,9 @@ import (
 	"vhs/pkg/errorcollector"
 	"vhs/pkg/ffhelp"
 	"vhs/pkg/webvtt"
+
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 )
 
 type VideoUploaderBase struct {

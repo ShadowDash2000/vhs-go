@@ -1,11 +1,12 @@
 package vhs
 
 import (
+	"vhs/internal/vhs/entities"
+	"vhs/pkg/ffhelp"
+
 	"github.com/alexflint/go-restructure"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
-	"vhs/internal/vhs/entities"
-	"vhs/pkg/ffhelp"
 )
 
 type VideoBase struct {
@@ -119,6 +120,10 @@ func (v *VideoBase) Video() string {
 
 func (v *VideoBase) SetVideo(file *filesystem.File) {
 	v.Set("video", file)
+}
+
+func (v *VideoBase) SetVideoPath(path string) {
+	v.Set("video", path)
 }
 
 func (v *VideoBase) Status() entities.Status {

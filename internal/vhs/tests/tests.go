@@ -1,9 +1,10 @@
 package tests
 
 import (
-	"github.com/pocketbase/pocketbase/tests"
 	"os"
 	"vhs/pkg/collections"
+
+	"github.com/pocketbase/pocketbase/tests"
 
 	_ "vhs/migrations"
 )

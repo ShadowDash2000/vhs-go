@@ -1,9 +1,10 @@
 package main
 
 import (
+	"log"
+
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
-	"log"
 
 	_ "vhs/migrations"
 )

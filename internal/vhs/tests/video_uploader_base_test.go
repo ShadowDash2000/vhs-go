@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"github.com/pocketbase/pocketbase/core"
 	"io"
 	"log/slog"
 	"os"
@@ -9,6 +8,8 @@ import (
 	"vhs/internal/vhs"
 	"vhs/internal/vhs/entities"
 	"vhs/pkg/ffhelp"
+
+	"github.com/pocketbase/pocketbase/core"
 )
 
 func TestCreateStoryBoard(t *testing.T) {

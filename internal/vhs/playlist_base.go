@@ -2,10 +2,11 @@ package vhs
 
 import (
 	"fmt"
+	"vhs/internal/vhs/entities"
+
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"golang.org/x/exp/slices"
-	"vhs/internal/vhs/entities"
 )
 
 type PlaylistBase struct {

@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"errors"
-	"github.com/gorilla/websocket"
-	"github.com/pocketbase/pocketbase/core"
 	"net/http"
 	"vhs/internal/vhs"
 	"vhs/internal/vhs/entities"
 	"vhs/internal/vhs/entities/dto"
+
+	"github.com/gorilla/websocket"
+	"github.com/pocketbase/pocketbase/core"
 )
 
 type Handlers struct {

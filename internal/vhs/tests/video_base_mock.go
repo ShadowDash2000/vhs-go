@@ -1,8 +1,9 @@
 package tests
 
 import (
-	"github.com/pocketbase/pocketbase/core"
 	"vhs/internal/vhs"
+
+	"github.com/pocketbase/pocketbase/core"
 )
 
 type VideoBaseMock struct {

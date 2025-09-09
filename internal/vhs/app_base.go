@@ -4,6 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
+	"strings"
+	"vhs/internal/vhs/entities"
+	"vhs/internal/vhs/entities/dto"
+	"vhs/internal/vhs/helper"
+	"vhs/pkg/collections"
+
 	"github.com/gorilla/websocket"
 	"github.com/ncruces/go-sqlite3/driver"
 	"github.com/ncruces/go-sqlite3/ext/unicode"
@@ -12,13 +20,6 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 	"golang.org/x/exp/slices"
-	"log/slog"
-	"os"
-	"strings"
-	"vhs/internal/vhs/entities"
-	"vhs/internal/vhs/entities/dto"
-	"vhs/internal/vhs/helper"
-	"vhs/pkg/collections"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
 	_ "github.com/ncruces/go-sqlite3/embed"
@@ -72,10 +73,6 @@ func (a *AppBase) bindHooks() {
 
 func (a *AppBase) Start() error {
 	return PocketBase.Start()
-}
-
-func (a *AppBase) IsDev() bool {
-	return PocketBase.IsDev()
 }
 
 func inspectRuntime() (withGoRun bool) {
